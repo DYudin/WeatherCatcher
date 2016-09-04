@@ -4,9 +4,9 @@
 
 @using WeatherCatcher.Models
 
-@model City
+@model IEnumerable<CityViewModel>
 @{
-    ViewBag.Title = "Погода в городах";
+    ViewBag.Title = "Weather in the cities";
 }
 
 @section Scripts {
@@ -18,19 +18,13 @@
             }
         };
 
-        //function sendAjaxRequest(httpMethod, callback, url) {
-        //    $.ajax("/api/web" + (url ? "/" + url : ""), {
-        //        type: httpMethod,
-        //        success: callback
-        //    });
-            
-            function sendAjaxRequest(httpMethod, callback, url, reqData) {
-                $.ajax("/api/web" + (url ? "/" + url : ""), {
-                    type: httpMethod,
-                    success: callback,
-                    data: reqData
-                });
-            }
+        function sendAjaxRequest(httpMethod, callback, url, reqData) {
+            $.ajax("/api/city" + (url ? "/" + url : ""), {
+                type: httpMethod,
+                success: callback,
+                data: reqData
+            });
+        }
 
         function getAllItems() {
             sendAjaxRequest("GET", function(data) {
@@ -42,17 +36,27 @@
         }
 
         function handleEditorClick() {
-            sendAjaxRequest("POST", function (newItem) {
-                model.cities.push(newItem);
-            }, null, {
-                Name: model.editor.name
-}
+            sendAjaxRequest("POST", function (newItems) {
+                if (newItems.length > 0) {
+                    for (var i = 0; i < newItems.length; i++) {
+                        model.cities.push(newItems[i]);
+                    }
+                } else {
+                    alert('Not found any weather information for selected city');
+                }}, null, { 
+                    Name: model.editor.name
+                }
             );
         }
 
         function removeItem(item) {
-            sendAjaxRequest("DELETE", function () {
-                getAllItems();
+            sendAjaxRequest("DELETE", function() {
+                for (var i = 0; i < model.cities().length; i++) {
+                    if (model.cities()[i].Name == item.Name) {
+                        model.cities.remove(model.cities()[i]);
+                        break;
+                    }
+                }
             }, item.Name);
         }
 
@@ -69,7 +73,7 @@
     <div class="panel-body">
         <table class="table table-striped table-condensed">
             <thead>
-            <tr><th>Имя</th><th>Температура</th><th>Влажность</th><th>Давление</th><th>Погодные явления</th><th>Сервис</th></tr>
+            <tr><th>City name</th><th>Temperature(deg C)</th><th>Humidity</th><th>Pressure</th><th>Weather events</th><th>Weather service</th></tr>
             </thead>
             <tbody data-bind="foreach: model.cities">
             <tr>
@@ -78,11 +82,11 @@
                 <td data-bind="text: Weather.Humidity"></td>
                 <td data-bind="text: Weather.Pressure"></td>
                 <td data-bind="text: Weather.WeatherСonditions"></td>
-                <td data-bind="text: Weather.WeatherService"></td>
+                <td data-bind="text: WeatherService"></td>
                 <td>
                     <button class="btn btn-xs btn-primary"
                             data-bind="click: removeItem">
-                        Удалить
+                        Delete
                     </button>
                 </td>
             </tr>
@@ -90,24 +94,16 @@
         </table>
     </div>
 </div>
-
-    <div id="editor" class="section panel panel-primary">
-@Html.Partial("Creator", new City("test1", new Weather(25,25,25,"tt"), "test2"))
-    </div>
-
-@*<div id="editor2" class="section panel panel-primary">
-        @*<div class="panel-heading">
-            
-        </div>*@
-        @*<div class="panel-body">
+<div id="editor2" class="section panel panel-primary">
+        <div class="panel-body">
             <div class="form-group">
-                <label>Название города</label>
+                <label>City name</label>
                 <input class="form-control" data-bind="value: model.editor.name" />
             </div>
             <button class="btn btn-primary"
                     data-bind="click: handleEditorClick">
-                Добавить
+                Add
             </button>
-        </div>*@
-    @*</div>*@
+        </div>
+    </div>
 }
